@@ -1,0 +1,88 @@
+#!/bin/sh
+
+log() {
+
+  /usr/bin/logger -t periodicping.template -- $@
+}
+
+ENABLE=?<service.systemmonitor.enable>;
+ADDR1=?<service.systemmonitor.ping_address1>;
+ADDR2=?<service.systemmonitor.ping_address2>;
+PERIOD=?<service.systemmonitor.ping_period>;
+ERROR_PERIOD=?<service.systemmonitor.ping_failure_period>;
+ERROR_COUNT=?<service.systemmonitor.ping_failure_count>;
+PH2_SUCC_COUNT=?<service.systemmonitor.host2_success_count>;
+REBOOT_PERIOD=?<service.systemmonitor.reboot_period>;
+
+SRC_ADDR1=?<link.profile.2.iplocal>; # access-seeker profile address
+SRC_ADDR2=?<link.profile.1.iplocal>; # RDM profile address
+
+# the reset command actually gets called with an extra 1 or 0 argument
+# this is an undocumented feature which can break things! :-/
+RESET_COMMAND="reset_rfm_pingmon.sh"
+
+CMD=periodicpingd
+ARGS="-d -c $RESET_COMMAND"
+
+
+DSCP1=?<service.systemmonitor.dscp1>;
+DSCP2=?<service.systemmonitor.dscp2>;
+
+
+test -n "$ADDR1" && ARGS="$ARGS -p $ADDR1"
+test -n "$ADDR2" && ARGS="$ARGS -s $ADDR2"
+test -n "$PERIOD" && ARGS="$ARGS -t $PERIOD"
+test -n "$ERROR_PERIOD" && ARGS="$ARGS -i $ERROR_PERIOD"
+test -n "$ERROR_COUNT" && ARGS="$ARGS -f $ERROR_COUNT"
+test -n "$PH2_SUCC_COUNT" && ARGS="$ARGS -x $PH2_SUCC_COUNT"
+test -n "$REBOOT_PERIOD" -a "$REBOOT_PERIOD" -gt 0 && ARGS="$ARGS -r $REBOOT_PERIOD"
+test -n "$SRC_ADDR1" && ARGS="$ARGS -P $SRC_ADDR1"
+test -n "$SRC_ADDR2" && ARGS="$ARGS -S $SRC_ADDR2"
+
+ping_monitor_route()
+{
+
+	ping_address=`rdb_get service.systemmonitor.ping_address1`
+	rf_dev=`rdb_get link.profile.2.interface`
+
+	if [  -n "$rf_dev" -a -n "$ping_address" -a "$ping_address" != '0.0.0.0' ]; then
+		#echo "$ping_address"
+		ip=`echo $ping_address| sed -n '/^[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+/p'`
+		if [ -n "$ip" ]; then
+			log "add route for $ip for $rf_dev"
+			route add $ip  $rf_dev
+		fi
+		
+	fi 
+
+}
+
+pingmon_iptable()
+{
+	
+	if [ -n "$SRC_ADDR1" -a -n "$ADDR1" ]; then
+		iptables -t mangle -A O_M_pingmon  -s $SRC_ADDR1 -d $ADDR1 -j DSCP --set-dscp-class $DSCP1
+	fi
+	if [ -n "$SRC_ADDR2" -a -n "$ADDR2" ]; then
+		iptables -t mangle -A O_M_pingmon  -s $SRC_ADDR2 -d $ADDR2 -j DSCP --set-dscp-class $DSCP2
+	fi
+}
+
+#Flash the ping monitor chain.
+iptables -t mangle -F O_M_pingmon
+
+if [ "$ENABLE" == "1" ] ; then
+	pkill $CMD
+	logger "Running: $CMD $ARGS"
+
+	# Set up the pingmon table
+	pingmon_iptable
+	
+	ping_monitor_route
+	
+	$CMD $ARGS &
+else
+	pkill $CMD
+fi
+
+exit $?

@@ -1,0 +1,87 @@
+#!/bin/sh
+
+log() {
+	logger -t "periodicping.template" -- "$@"
+}
+
+# read configuration
+addr1="?<service.systemmonitor.destaddress>;"
+addr2="?<service.systemmonitor.destaddress2>;"
+ping_period_sec="?<service.systemmonitor.periodicpingtimer>;"
+ping_acc_period_sec="?<service.systemmonitor.pingacceleratedtimer>;"
+failcnt="?<service.systemmonitor.failcount>;"
+reboot_period_min="?<service.systemmonitor.forcereset>;"
+
+log "start"
+
+# terminate previous periodicping
+killall "periodicpingd" 2> /dev/null > /dev/null
+
+# wait
+i=0
+while [ $i -lt 10 ]; do
+	if ! pidof periodicpingd 2> /dev/null > /dev/null; then
+		break;
+	fi 
+	sleep 1
+	i=$(($i+1))
+
+	log "waiting #$i/10"
+done
+
+# force to terminate if necessary
+if pidof periodicpingd 2> /dev/null > /dev/null; then
+	log "force to terminate periodicpingd"
+	killall -9 "periodicpingd"
+fi
+
+# cancel the previous timer
+log "cancel the previous reboot timer"
+kill $(pidof-runontime "periodic_reboot_timer") 2> /dev/null > /dev/null
+
+# put 0 if no value
+test -z "$ping_period_sec" && ping_period_sec="0"
+test -z "$failcnt" && failcnt="0"
+test -z "$reboot_period_min" && reboot_period_min="0"
+test -z "$ping_acc_period_sec" && ping_acc_period_sec="0"
+
+# see if the feature is enabled
+if ( test -n "$addr1" || test -n "$addr2" ) \
+	&& ( test "$ping_period_sec" -gt 0 ) && ( test "$failcnt" -gt 0 ) \
+	|| ( test "$reboot_period_min" -gt 0 ); then
+	SERVICE_EN=1
+else
+	SERVICE_EN=0
+fi
+
+# print configuration
+log << EOF
+addr1="$addr1"
+addr2="$addr2"
+ping_period_sec="$ping_period_sec"
+ping_acc_period_sec="$ping_acc_period_sec"
+failcnt="$failcnt"
+reboot_period_min="$reboot_period_min"
+reboot_period_rnd_min="$reboot_period_rnd_min"
+SERVICE_EN="$SERVICE_EN"
+EOF
+
+# build options
+test -n "$addr1" && SERVICE_OPT="$SERVICE_OPT -p $addr1"
+test -n "$addr2" && SERVICE_OPT="$SERVICE_OPT -s $addr2"
+test "$ping_period_sec" -gt "0" && SERVICE_OPT="$SERVICE_OPT -t $ping_period_sec"
+test "$ping_acc_period_sec" -gt "0" && SERVICE_OPT="$SERVICE_OPT -i $ping_acc_period_sec"
+test "$failcnt" -gt "0" && SERVICE_OPT="$SERVICE_OPT -f $failcnt"
+test "$reboot_period_min" -gt "0" && SERVICE_OPT="$SERVICE_OPT -r $reboot_period_min"
+
+# run
+if [ "$SERVICE_EN" = "1" ]; then
+	log "run periodicpingd $SERVICE_OPT -c reboot-after-random-delay.sh" 
+	periodicpingd $SERVICE_OPT -c reboot-after-random-delay.sh
+else
+	log "periodicpingd disabled"
+fi
+
+log "done"
+
+exit 0

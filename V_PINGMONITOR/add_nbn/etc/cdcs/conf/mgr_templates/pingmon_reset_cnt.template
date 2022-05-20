@@ -1,0 +1,21 @@
+#!/bin/sh
+#
+# This template is triggerred to reset rdb variables related to NBN ping monitor
+# when either bearer becomes UP.
+#
+# Copyright (C) 2017 NetComm Wireless Limited.
+#
+
+nof=${0##*/}                        # Name of file/script.
+nof=${nof%-*}                       # Remove mangled suffix
+source /lib/utils.sh
+
+LINK1=?<link.profile.1.status>;
+LINK2=?<link.profile.2.status>;
+
+if [ "$LINK1" = 'up' -o "$LINK2" = 'up' ]; then
+	if [ "$(rdb_get service.systemmonitor.pingmon_dccdwait_cnt)" != "0" ]; then
+		logInfo "Reset pingmon_dccdwait_cnt"
+		rdb_set service.systemmonitor.pingmon_dccdwait_cnt 0
+	fi
+fi
