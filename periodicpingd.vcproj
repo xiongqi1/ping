@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioProject
+	ProjectType="Visual C++"
+	Version="9.00"
+	Name="periodicpingd"
+	ProjectGUID="{29BD8527-4F37-4503-94CF-5AC7077EEA3C}"
+	Keyword="MakeFileProj"
+	TargetFrameworkVersion="196613"
+	>
+	<Platforms>
+		<Platform
+			Name="Win32"
+		/>
+	</Platforms>
+	<ToolFiles>
+	</ToolFiles>
+	<Configurations>
+		<Configuration
+			Name="Debug|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="C:\cygwin\bin\ssh.exe %SSHUSER%@%SSHHOST% &quot;sshbuild &apos;$(ProjectDir)&apos; $(ConfigurationName)&quot;"
+				ReBuildCommandLine="C:\cygwin\bin\ssh.exe %SSHUSER%@%SSHHOST% &quot;sshbuild &apos;$(ProjectDir)&apos; $(ConfigurationName) rebuild&quot;"
+				CleanCommandLine="C:\cygwin\bin\ssh.exe %SSHUSER%@%SSHHOST% &quot;sshbuild &apos;$(ProjectDir)&apos; $(ConfigurationName) clean&quot;"
+				Output="periodicpingd"
+				PreprocessorDefinitions="WIN32;_DEBUG;_GNU_SOURCE;BOARD_3g8wv;PLATFORM_PLATYPUS"
+				IncludeSearchPath="../gcc-include"
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="0"
+			>
+			<Tool
+				Name="VCNMakeTool"
+				BuildCommandLine="C:\cygwin\bin\ssh.exe %SSHUSER%@%SSHHOST% &quot;sshbuild &apos;$(ProjectDir)&apos; $(ConfigurationName)&quot;"
+				ReBuildCommandLine="C:\cygwin\bin\ssh.exe %SSHUSER%@%SSHHOST% &quot;sshbuild &apos;$(ProjectDir)&apos; $(ConfigurationName) rebuild&quot;"
+				CleanCommandLine="C:\cygwin\bin\ssh.exe %SSHUSER%@%SSHHOST% &quot;sshbuild &apos;$(ProjectDir)&apos; $(ConfigurationName) clean&quot;"
+				Output="periodicpingd"
+				PreprocessorDefinitions="WIN32;NDEBUG;_GNU_SOURCE"
+				IncludeSearchPath="../gcc-include"
+				ForcedIncludes=""
+				AssemblySearchPath=""
+				ForcedUsingAssemblies=""
+				CompileAsManaged=""
+			/>
+		</Configuration>
+	</Configurations>
+	<References>
+	</References>
+	<Files>
+		<Filter
+			Name="Main"
+			>
+			<File
+				RelativePath=".\Makefile"
+				>
+			</File>
+			<File
+				RelativePath=".\periodicping.c"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Utilities"
+			>
+			<File
+				RelativePath=".\daemon.c"
+				>
+			</File>
+			<File
+				RelativePath=".\daemon.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ping.c"
+				>
+			</File>
+			<File
+				RelativePath=".\ping.h"
+				>
+			</File>
+		</Filter>
+	</Files>
+	<Globals>
+	</Globals>
+</VisualStudioProject>
